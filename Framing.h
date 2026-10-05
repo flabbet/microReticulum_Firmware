@@ -98,6 +98,8 @@
   #define CMD_PROVISION_REQ 0x86
   #define CMD_PROVISION_RSP 0x87
 
+  #define CMD_HELLO       0x88
+
   #define DETECT_REQ      0x73
   #define DETECT_RESP     0x46
 

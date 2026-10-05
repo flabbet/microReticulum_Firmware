@@ -1086,6 +1086,14 @@ printf("[init] op_mode: %U\n", op_mode);
       }
       reticulum.start();
 
+      /*#if MCU_VARIANT == MCU_ESP32 && (HAS_BLE == true || HAS_BLUETOOTH == true)
+        if (RNS::Transport::identity()) {
+          mobile_api::set_identity_hash(
+              RNS::Transport::identity().hash().toHex().c_str());
+          printf("Mobile API identity hash set to: %s", RNS::Transport::identity().hash().toHex().c_str());
+        }
+      #endif*/
+
       // Set loop callback only after the Reticulum instance is started
       // (to avoid looping without a completely initialized instance)
       RNS::Utilities::OS::set_loop_callback(&loop);
@@ -1708,6 +1716,7 @@ void transmit(uint16_t size) {
 }
 
 void serial_callback(uint8_t sbyte) {
+  printf("[serial] Received byte: 0x%02X\n", sbyte);
   if (IN_FRAME && sbyte == FEND && command == CMD_DATA) {
     IN_FRAME = false;
 
@@ -1759,6 +1768,12 @@ void serial_callback(uint8_t sbyte) {
               if (queue_cursor == CONFIG_QUEUE_SIZE) queue_cursor = 0;
             }
         }
+      }
+      else if (command == CMD_HELLO)
+      {
+        printf("Received HELLO command\n");
+        mobile_api::notify_identity();
+      
 #ifdef HAS_PROVISIONING
     } else if (command == CMD_PROVISION_REQ) {
         if (sbyte == FESC) {
@@ -2743,7 +2758,9 @@ void loop() {
 
   #if MCU_VARIANT == MCU_ESP32 || MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_NATIVE
       buffer_serial();
-      if (!fifo_isempty(&serialFIFO)) serial_poll();
+      if (!fifo_isempty(&serialFIFO)) {
+        serial_poll();
+      }
   #else
     if (!fifo_isempty_locked(&serialFIFO)) serial_poll();
   #endif
@@ -2939,7 +2956,13 @@ void buffer_serial() {
       #if MCU_VARIANT != MCU_ESP32 && MCU_VARIANT != MCU_NRF52
         if (!fifo_isfull_locked(&serialFIFO)) { fifo_push_locked(&serialFIFO, Serial.read()); }
       #elif HAS_BLUETOOTH || HAS_BLE == true || HAS_WIFI
-        if      (bt_state == BT_STATE_CONNECTED) { if (!fifo_isfull(&serialFIFO)) { fifo_push(&serialFIFO, SerialBT.read()); } }
+        if      (bt_state == BT_STATE_CONNECTED) { 
+          if (!fifo_isfull(&serialFIFO)) 
+          {
+            int bt_byte = SerialBT.read();
+            fifo_push(&serialFIFO, bt_byte); 
+          } 
+        }
         #if HAS_WIFI
         else if (wifi_host_is_connected())       { if (!fifo_isfull(&serialFIFO)) { fifo_push(&serialFIFO, wifi_remote_read()); } }
         #endif

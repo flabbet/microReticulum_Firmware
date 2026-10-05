@@ -23,11 +23,13 @@
     #include "BluetoothSerial.h"
     #include "esp_bt_main.h"
     #include "esp_bt_device.h"
+    #include "MobileApi.h"
     BluetoothSerial SerialBT;
   #elif HAS_BLE == true
     #include "esp_bt_main.h"
     #include "esp_bt_device.h"
     #include "BLESerial.h"
+    #include "MobileApi.h"
     BLESerial SerialBT;
   #endif
 
@@ -98,6 +100,7 @@ char bt_devname[11];
     }
 
     void bt_pairing_complete(boolean success) {
+      printf("BT pairing complete: %s\n", success ? "success" : "failure");
       display_unblank();
       if (success) {
         bt_disable_pairing();
@@ -111,6 +114,8 @@ char bt_devname[11];
       if(event == ESP_SPP_SRV_OPEN_EVT) {
         bt_state = BT_STATE_CONNECTED;
         cable_state = CABLE_STATE_DISCONNECTED;
+
+        printf("BT connected\n");
       }
        
       if(event == ESP_SPP_CLOSE_EVT ){
@@ -185,6 +190,7 @@ char bt_devname[11];
         bt_state = BT_STATE_ON;
         SerialBT.begin(bt_devname);
         SerialBT.setTimeout(10);
+        mobile_api::begin(SerialBT.ble_server);
       }
     }
 
@@ -386,6 +392,7 @@ char bt_devname[11];
           bt_flush();
         }
       }
+      mobile_api::notify_identity();
     }
   #endif
 

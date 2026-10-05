@@ -28,6 +28,20 @@ When in `Transport Mode`, the device will display "TRANSPORT" across the top of 
 
 Note that at the present time, when in TNC mode this firmware does not operate like a regular RNode does when in TNC mode due to logging from the embedded RNS that is output on the serial port. This can clobber KISS communication from the attached machine so do not attempt to attach another RNS to the device while in this mode. On the plus side, there is extensive logging available on the serial port to observe the embedded RNS in action and to aid in troubleshooting.
 
+## Mobile Bluetooth API scaffold
+
+ESP32 Classic Bluetooth builds expose an initial mobile application response
+over the existing SPP stream. After a mobile device connects, the firmware
+sends:
+
+```text
+MRAPI/1 IDENTITY <32-character-hex-identity-hash>\n
+```
+
+This is an initial API scaffold; message and Link operations are intentionally
+not implemented yet. BLE-enabled ESP32 builds additionally expose a separate
+GATT service documented in `MobileApi.h`.
+
 ## Build Dependencies
 
 Build environment is configured for use in [VSCode](https://code.visualstudio.com/) and [PlatformIO](https://platformio.org/).
